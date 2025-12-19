@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "firescrape": {
+      "command": "bun",
+      "args": ["run", "C:/Users/destr/firescrape-mcp/index.ts"]
+    }
+  }
+}
