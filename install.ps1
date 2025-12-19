@@ -1,4 +1,4 @@
-Write-Host "🔥 Setting up FireScrape MCP..." -ForegroundColor Cyan
+﻿Write-Host "🔥 Setting up FireScrape MCP..." -ForegroundColor Cyan
 
 # Check for Bun
 if (-not (Get-Command bun -ErrorAction SilentlyContinue)) {
@@ -16,7 +16,7 @@ $scriptPath = Join-Path -Path $currentPath -ChildPath "index.ts"
 $scriptPath = $scriptPath -replace "\\", "/"
 
 Write-Host "✅ Setup complete!" -ForegroundColor Green
-Write-Host "`n📝 Add this to your Claude Desktop config (claude_desktop_config.json):" -ForegroundColor Yellow
+Write-Host "`n📝 Add this to your Claude Desktop config (claude_desktop_config.json):" -ForegroundColor Yellow    
 Write-Host "{
   `"mcpServers`": {
     `"firescrape`": {
