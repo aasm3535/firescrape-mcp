@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "MCP server for searching and scraping the web via FireScrape",
   "main": "index.ts",
+  "bin": {
+    "firescrape-mcp": "./firescrape-mcp.exe"
+  },
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
-    "dev": "bun --watch run index.ts"
+    "dev": "bun --watch run index.ts",
+    "build": "bun build --compile --minify --sourcemap ./index.ts --outfile firescrape-mcp"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.1",
