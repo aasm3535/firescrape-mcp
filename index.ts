@@ -6,15 +6,21 @@ import { z } from "zod";
 import axios from "axios";
 import * as cheerio from "cheerio";
 import fs from "fs/promises";
-import path from "path";
+import TurndownService from "turndown";
 
 // --- Config ---
-const SERVER_NAME = "firescrape-mcp";
-const SERVER_VERSION = "1.0.0";
+const SERVER_NAME = "@yutugyutugyutug/firescrape-mcp";
+const SERVER_VERSION = "1.0.3";
+
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  codeBlockStyle: "fenced",
+  bulletListMarker: "-"
+});
 
 // --- Helpers ---
 const getHeaders = () => ({
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
   'Accept-Language': 'en-US,en;q=0.5'
 });
@@ -24,7 +30,7 @@ async function googleSearch(query: string) {
     const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
     const { data } = await axios.get(url, { headers: getHeaders() });
     const $ = cheerio.load(data);
-    
+
     const results: any[] = [];
     $('.result').each((i, el) => {
       if (i > 8) return;
@@ -41,19 +47,109 @@ async function googleSearch(query: string) {
 
 async function scrapeUrl(url: string) {
   try {
-    const { data } = await axios.get(url, { 
+    const { data } = await axios.get(url, {
       headers: getHeaders(),
-      timeout: 15000 
+      timeout: 15000
     });
     const $ = cheerio.load(data);
+
+    // 1. Metadata Extraction
+    const metadata = {
+      title: $('title').text().trim() || '',
+      description: $('meta[name="description"]').attr('content') || $('meta[property="og:description"]').attr('content') || '',
+      published_time: $('meta[property="article:published_time"]').attr('content') || $('meta[name="date"]').attr('content') || 'unknown',
+      type: $('meta[property="og:type"]').attr('content') || 'website',
+      keywords: $('meta[name="keywords"]').attr('content') || ''
+    };
+
+    // 2. Table of Contents (ToC)
+    const toc = [];
+    $('h1, h2, h3').each((_, el) => {
+      toc.push({
+        level: el.tagName.toLowerCase(),
+        text: $(el).text().trim()
+      });
+    });
+
+    // 3. Noise Filtering (Noise Removal)
+    const selectorsToRemove = [
+      'script', 'style', 'noscript', 'iframe', 'svg',
+      'nav', 'footer', 'header', 'aside',
+      '.ad', '.ads', '.advertisement', '.social-share',
+      '.cookie-consent', '.popup', '#sidebar'
+    ];
+    $(selectorsToRemove.join(',')).remove();
+
+    // 4. Content Focus (Try to find main content)
+    let contentHtml = '';
+    const mainSelectors = ['main', 'article', '#content', '.content', '#main'];
+    let foundMain = false;
+
+    for (const selector of mainSelectors) {
+      if ($(selector).length > 0) {
+        contentHtml = $(selector).html() || '';
+        foundMain = true;
+        break;
+      }
+    }
     
-    $('script, style, nav, footer, iframe, noscript, svg, header').remove();
-    const title = $('title').text().trim();
-    const content = $('body').text().replace(/\s+/g, ' ').trim().substring(0, 8000);
-    
-    return { title, url, content };
+    // Fallback to body if no main container found
+    if (!foundMain) {
+      contentHtml = $('body').html() || '';
+    }
+
+    // 5. Convert to Markdown
+    const markdown = turndownService.turndown(contentHtml);
+
+    return { 
+      url, 
+      metadata, 
+      toc: toc.slice(0, 20), // Limit ToC size
+      markdown: markdown.substring(0, 15000) // Safety limit
+    };
+
   } catch (error: any) {
     throw new Error(`Scrape failed: ${error.message}`);
+  }
+}
+
+async function searchInPage(url: string, query: string) {
+  try {
+    const { data } = await axios.get(url, { headers: getHeaders() });
+    const $ = cheerio.load(data);
+    
+    // Clean minimal noise
+    $('script, style, nav, footer, svg').remove();
+    
+    const bodyText = $('body').text();
+    // Split by double newlines or periods to simulate paragraphs
+    const paragraphs = bodyText.split(/\n\s*\n|\.\s+/).map(p => p.trim()).filter(p => p.length > 20);
+    
+    const matches = [];
+    const lowerQuery = query.toLowerCase();
+
+    for (let i = 0; i < paragraphs.length; i++) {
+      if (paragraphs[i].toLowerCase().includes(lowerQuery)) {
+        // Add context (previous + current + next paragraph)
+        const context = [
+          paragraphs[i - 1] || '',
+          `**${paragraphs[i]}**`, // Highlight match
+          paragraphs[i + 1] || ''
+        ].join('\n\n').trim();
+        
+        matches.push(context);
+        if (matches.length >= 5) break; // Limit to 5 matches
+      }
+    }
+
+    return {
+      query,
+      found_count: matches.length,
+      results: matches
+    };
+
+  } catch (error: any) {
+    throw new Error(`In-page search failed: ${error.message}`);
   }
 }
 
@@ -69,7 +165,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "search_web",
-        description: "Search the web (DuckDuckGo) for current information.",
+        description: "Search the web (DuckDuckGo). Returns fresh links and snippets.",
         inputSchema: {
           type: "object",
           properties: { query: { type: "string" } },
@@ -78,7 +174,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       },
       {
         name: "scrape_webpage",
-        description: "Extract text content from a specific URL.",
+        description: "Smartly scrape a webpage. Returns Markdown, Metadata, and Table of Contents. Filters out ads and navigation.",
         inputSchema: {
           type: "object",
           properties: { url: { type: "string" } },
@@ -86,11 +182,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
-        name: "list_files",
-        description: "List files in a local directory.",
+        name: "search_in_page",
+        description: "Search for a specific keyword or phrase inside a large webpage. Useful when you don't need the whole page.",
         inputSchema: {
           type: "object",
-          properties: { path: { type: "string", description: "Absolute path" } }
+          properties: { 
+            url: { type: "string" },
+            query: { type: "string" }
+          },
+          required: ["url", "query"]
         }
       },
       {
@@ -115,16 +215,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { query } = args as { query: string };
       return { content: [{ type: "text", text: JSON.stringify(await googleSearch(query), null, 2) }] };
     }
-    
+
     if (name === "scrape_webpage") {
       const { url } = args as { url: string };
       return { content: [{ type: "text", text: JSON.stringify(await scrapeUrl(url), null, 2) }] };
     }
 
-    if (name === "list_files") {
-      const dirPath = (args as { path?: string })?.path || process.cwd();
-      const files = await fs.readdir(dirPath);
-      return { content: [{ type: "text", text: files.join("\n") }] };
+    if (name === "search_in_page") {
+      const { url, query } = args as { url: string, query: string };
+      return { content: [{ type: "text", text: JSON.stringify(await searchInPage(url, query), null, 2) }] };
     }
 
     if (name === "read_file") {
@@ -142,4 +241,3 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // --- Start ---
 const transport = new StdioServerTransport();
 await server.connect(transport);
-

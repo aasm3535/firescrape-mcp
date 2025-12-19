@@ -2,12 +2,16 @@
 
 An **MCP (Model Context Protocol)** server that empowers AI models (like Claude, Cursor, etc.) to browse the web, search for information, and read local files.
 
-## 🚀 Features
+## 🚀 Features (v1.0.3)
 
+*   **`scrape_webpage`**: Smart AI-ready scraping.
+    *   **Markdown**: Converts HTML to clean Markdown (easier for LLMs to read).
+    *   **Noise Filtering**: Removes ads, popups, navbars, and scripts automatically.
+    *   **Metadata**: Returns publication date, description, and keywords.
+    *   **Table of Contents**: Extracts H1-H3 headers for navigation.
 *   **`search_web`**: Search the internet using DuckDuckGo (No API key required).
-*   **`scrape_webpage`**: Extract clean, markdown-friendly text from any URL (bypasses basic bot protections).
-*   **`list_files`**: Explore your local project structure.
-*   **`read_file`**: Read file contents for code analysis or debugging.
+*   **`search_in_page`**: Find specific information inside massive webpages (saves context window).
+*   **`list_files` / `read_file`**: Local filesystem access.
 
 ## 📦 Installation & Usage
 
@@ -63,8 +67,9 @@ npx @yutugyutugyutug/firescrape-mcp
 
 | Tool Name | Description | Parameters |
 | :--- | :--- | :--- |
+| `scrape_webpage` | Reads a specific URL and returns structured Markdown. | `url` (string) |
 | `search_web` | Finds current info on the web. | `query` (string) |
-| `scrape_webpage` | Reads a specific URL. | `url` (string) |
+| `search_in_page` | Searches text inside a specific page URL. | `url` (string), `query` (string) |
 | `list_files` | Lists files in a folder. | `path` (string, optional) |
 | `read_file` | Reads a file's content. | `path` (string) |
 
