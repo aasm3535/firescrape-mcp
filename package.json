@@ -1,11 +1,15 @@
 {
-  "name": "firescrape-mcp",
-  "version": "1.0.0",
+  "name": "@yutugyutugyutug/firescrape-mcp",
+  "version": "1.0.2",
   "description": "MCP server for searching and scraping the web via FireScrape",
   "main": "index.ts",
   "bin": {
-    "firescrape-mcp": "./firescrape-mcp.exe"
+    "firescrape-mcp": "./index.ts"
   },
+  "files": [
+    "index.ts",
+    "README.md"
+  ],
   "type": "module",
   "scripts": {
     "start": "bun run index.ts",
@@ -23,3 +27,5 @@
     "@types/bun": "latest"
   }
 }
+
+

@@ -9,54 +9,44 @@ An **MCP (Model Context Protocol)** server that empowers AI models (like Claude,
 *   **`list_files`**: Explore your local project structure.
 *   **`read_file`**: Read file contents for code analysis or debugging.
 
-## 📦 Installation & Setup
+## 📦 Installation & Usage
 
-### Method 1: Single Binary (Recommended for Windows)
+### Method 1: NPM / Bun (Recommended)
 
-No Node.js or Bun required.
+You can run the server directly without cloning the repo:
 
-1.  Download `firescrape-mcp.exe` from the Releases page (or build it yourself with `bun run build`).
-2.  **Claude Desktop Config:**
-    ```json
-    {
-      "mcpServers": {
-        "firescrape": {
-          "command": "C:/Path/To/firescrape-mcp.exe",
-          "args": []
-        }
-      }
-    }
-    ```
+```bash
+# Using Bun (Recommended)
+bunx @yutugyutugyutug/firescrape-mcp
 
-### Method 2: Automatic (Smithery)
-
-Compatible with tools that support the Smithery registry.
-
-```yaml
-# smithery.yaml is included in the repo
+# Using Node.js
+npx @yutugyutugyutug/firescrape-mcp
 ```
 
-### Method 3: From Source (Developers)
+### Method 2: Single Binary (Windows)
 
-1.  **Prerequisites:** Install [Bun](https://bun.sh/).
-2.  **Clone & Install:**
-    ```powershell
-    git clone https://github.com/aasm3535/firescrape-mcp.git
-    cd firescrape-mcp
-    bun install
-    ```
-3.  **Build Binary (Optional):**
-    ```bash
-    bun run build
-    ```
+1.  Download `firescrape-mcp.exe` from Releases.
+2.  Use the path to the executable in your config.
+
+---
 
 ## 🔌 Connection Guides
 
 ### Claude Desktop App
 
 1.  Open config: `Win + R` -> `%APPDATA%\Claude\claude_desktop_config.json`
-2.  Add config (see Method 1 or Method 3).
-3.  Restart Claude.
+2.  Add this configuration:
+
+```json
+{
+  "mcpServers": {
+    "firescrape": {
+      "command": "bunx",
+      "args": ["@yutugyutugyutug/firescrape-mcp"]
+    }
+  }
+}
+```
 
 ### Cursor (AI Code Editor)
 
@@ -64,7 +54,8 @@ Compatible with tools that support the Smithery registry.
 2.  **Add New MCP Server**.
 3.  **Name:** `FireScrape`
 4.  **Type:** `stdio`
-5.  **Command:** `C:/Path/To/firescrape-mcp.exe` (or `bun run .../index.ts`)
+5.  **Command:** `bunx` (or `npx`)
+6.  **Args:** `@yutugyutugyutug/firescrape-mcp`
 
 ---
 
