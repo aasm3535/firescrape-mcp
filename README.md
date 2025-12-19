@@ -139,6 +139,7 @@ claude mcp add firescrape -- npx -y @yutugyutugyutug/firescrape-mcp
 | `search_in_page` | Searches text inside a specific page URL. | `url` (string), `query` (string) |
 | `list_files` | Lists files in a folder. | `path` (string, optional) |
 | `read_file` | Reads a file's content. | `path` (string) |
+| `get_agent_rules` | Returns the strict operational protocol for AI agents. | `(none)` |
 
 ---
 <div align="center">

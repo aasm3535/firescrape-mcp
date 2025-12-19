@@ -90,6 +90,15 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: { path: { type: "string" } },
           required: ["path"]
         }
+      },
+      {
+        name: "get_agent_rules",
+        description: "Returns the official strict guidelines and protocols for AI agents using FireScrape.",
+        inputSchema: {
+          type: "object",
+          properties: {},
+          required: []
+        }
       }
     ]
   };
@@ -99,6 +108,17 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
   try {
+    if (name === "get_agent_rules") {
+      const path = require('path');
+      const rulesPath = path.join(process.cwd(), "rules", "AI_USAGE_RULES.md");
+      try {
+        const content = await fs.readFile(rulesPath, 'utf-8');
+        return { content: [{ type: "text", text: content }] };
+      } catch (e) {
+         return { content: [{ type: "text", text: "Error: Could not locate 'rules/AI_USAGE_RULES.md'. Ensure the 'rules' folder is in the project root." }], isError: true };
+      }
+    }
+
     if (name === "search_web") {
       const { query } = args as { query: string };
       return { content: [{ type: "text", text: JSON.stringify(await unifiedSearch(query), null, 2) }] };
