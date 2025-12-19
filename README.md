@@ -30,7 +30,7 @@ Run instantly without global installation using `npx`:
 npx -y @yutugyutugyutug/firescrape-mcp
 ```
 
-### ✨ Key Features (v1.1.0)
+### ✨ Key Features (v1.1.2)
 
 *   🧠 **`deep_research`**: Conducts autonomous, multi-step research on complex topics, filtering noise and synthesizing reports.
 *   🌐 **`search_web`**: High-availability web search with fallback providers (DuckDuckGo + Brave) to ensure you always get results.
