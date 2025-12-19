@@ -10,7 +10,7 @@ import TurndownService from "turndown";
 
 // --- Config ---
 const SERVER_NAME = "@yutugyutugyutug/firescrape-mcp";
-const SERVER_VERSION = "1.0.12";
+const SERVER_VERSION = "1.0.13";
 
 const turndownService = new TurndownService({
   headingStyle: "atx",
@@ -341,8 +341,8 @@ async function discoverMcpTools(query: string) {
   }
 }
 
-async function deepResearchInternal(topic: string, depth: number, visited: Set<string> = new Set()): Promise<string> {
-  if (depth <= 0) return "";
+async function deepResearchInternal(topic: string, depth: number, visited: Set<string> = new Set()): Promise<{ content: string, links: string[] }> {
+  if (depth <= 0) return { content: "", links: [] };
 
   const results = await unifiedSearch(topic);
   const topLinks = results
@@ -354,34 +354,58 @@ async function deepResearchInternal(topic: string, depth: number, visited: Set<s
 
   const scrapes = await Promise.allSettled(topLinks.map(link => scrapeUrl(link)));
   
-  let report = `## Topic: ${topic}\n\n`;
-  let subTopics: string[] = [];
+  let knowledgeBuffer = "";
+  let extractedLinks: string[] = [];
 
   for (const res of scrapes) {
     if (res.status === 'fulfilled') {
       const { url, metadata, markdown, toc } = res.value;
-      report += `### Source: [${metadata.title || url}](${url})\n`;
       
-      // Basic insight extraction: take the first 500 chars and some headers
-      const insight = markdown.split('\n').filter(l => l.length > 40).slice(0, 3).join('\n\n');
-      report += `**Insights:**\n${insight}...\n\n`;
+      // Clean content from typical "Source:" markers to keep it unified
+      const cleanMarkdown = markdown
+        .split('\n')
+        .filter(l => l.length > 30 && !l.includes('Cookie') && !l.includes('Subscribe'))
+        .join('\n');
+
+      knowledgeBuffer += `\n### ${metadata.title || 'In-depth Analysis'}\n${cleanMarkdown.substring(0, 2000)}\n`;
       
-      // Collect potential sub-topics from headers (H2/H3)
-      const potentialSubs = toc.filter(t => t.level === 'h2' || t.level === 'h3').map(t => t.text);
-      subTopics.push(...potentialSubs);
+      // Extract internal-ish links from the page to follow
+      const linkMatches = markdown.match(/\[.*?\]\((https?:\/\/.*?)\)/g);
+      if (linkMatches) {
+        const pageLinks = linkMatches
+          .map(m => m.match(/\((https?:\/\/.*?)\)/)?.[1])
+          .filter(l => l && !visited.has(l) && !l.includes('twitter.com') && !l.includes('facebook.com'))
+          .slice(0, 2) as string[];
+        extractedLinks.push(...pageLinks);
+      }
     }
   }
 
-  if (depth > 1 && subTopics.length > 0) {
-    // Select 2 unique subtopics for next iteration
-    const nextTopics = Array.from(new Set(subTopics))
-      .filter(t => t.length > 10 && t.length < 100)
-      .slice(0, 2);
-    
-    for (const next of nextTopics) {
-      report += `\n---\n\n` + await deepResearchInternal(next, depth - 1, visited);
+  if (depth > 1 && extractedLinks.length > 0) {
+    const nextLinks = extractedLinks.slice(0, 2);
+    for (const nextLink of nextLinks) {
+        try {
+            visited.add(nextLink);
+            const subRes = await scrapeUrl(nextLink);
+            knowledgeBuffer += `\n### Deep Dive: ${subRes.metadata.title}\n${subRes.markdown.substring(0, 1500)}\n`;
+        } catch (e) {}
     }
   }
+
+  return { content: knowledgeBuffer, links: Array.from(visited) };
+}
+
+async function runDeepResearch(topic: string, depth: number) {
+  const visited = new Set<string>();
+  const { content, links } = await deepResearchInternal(topic, depth, visited);
+  
+  const report = `# Deep Research Report: ${topic}\n\n` +
+    `## Executive Summary\n` +
+    `This report synthesizes information found across multiple sources to provide a comprehensive overview of "${topic}".\n\n` +
+    `## Detailed Findings\n` +
+    content + 
+    `\n\n## References\n` + 
+    links.map(l => `- ${l}`).join('\n');
 
   return report;
 }
@@ -489,12 +513,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           const { query } = args as { query: string };
           return { content: [{ type: "text", text: JSON.stringify(await discoverMcpTools(query), null, 2) }] };       
         }
-        if (name === "deep_research") {
-          const { topic, depth = 2 } = args as { topic: string, depth?: number };
-          const report = await deepResearchInternal(topic, depth);
-          return { content: [{ type: "text", text: report }] };
-        }
-        if (name === "read_file") {      const filePath = (args as { path: string }).path;
+            if (name === "deep_research") {
+              const { topic, depth = 2 } = args as { topic: string, depth?: number };
+              const report = await runDeepResearch(topic, depth);
+              return { content: [{ type: "text", text: report }] };
+            }        if (name === "read_file") {      const filePath = (args as { path: string }).path;
       const content = await fs.readFile(filePath, 'utf-8');
       return { content: [{ type: "text", text: content }] };
     }

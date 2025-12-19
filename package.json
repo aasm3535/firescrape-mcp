@@ -1,6 +1,6 @@
 {
   "name": "@yutugyutugyutug/firescrape-mcp",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "MCP server for searching and scraping the web via FireScrape",
   "main": "index.ts",
   "bin": {
