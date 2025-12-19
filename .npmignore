@@ -1,0 +1,14 @@
+# Local development
+node_modules
+bun.lock
+.env
+firescrape-mcp
+firescrape-mcp.exe
+
+# Configs
+claude_config_example.json
+smithery.yaml
+
+# OS files
+.DS_Store
+Thumbs.db

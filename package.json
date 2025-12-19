@@ -1,14 +1,16 @@
 {
   "name": "@yutugyutugyutug/firescrape-mcp",
   "version": "1.1.0",
-  "description": "MCP server for searching and scraping the web via FireScrape",
+  "description": "Advanced MCP server for searching, scraping and deep research with automated synthesis",
   "main": "index.ts",
   "bin": {
     "firescrape-mcp": "./index.ts"
   },
   "files": [
     "index.ts",
-    "README.md"
+    "src",
+    "README.md",
+    "package.json"
   ],
   "type": "module",
   "scripts": {
@@ -16,6 +18,16 @@
     "dev": "bun --watch run index.ts",
     "build": "bun build --compile --minify --sourcemap ./index.ts --outfile firescrape-mcp"
   },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "scraper",
+    "search",
+    "research",
+    "ai"
+  ],
+  "author": "yutugyutugyutug",
+  "license": "MIT",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.1",
     "@types/turndown": "^5.0.6",
@@ -29,9 +41,3 @@
     "@types/bun": "latest"
   }
 }
-
-
-
-
-
-
