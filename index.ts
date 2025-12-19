@@ -10,7 +10,7 @@ import TurndownService from "turndown";
 
 // --- Config ---
 const SERVER_NAME = "@yutugyutugyutug/firescrape-mcp";
-const SERVER_VERSION = "1.0.10";
+const SERVER_VERSION = "1.0.11";
 
 const turndownService = new TurndownService({
   headingStyle: "atx",
@@ -211,8 +211,31 @@ async function searchInPage(url: string, query: string) {
   }
 }
 
+async function searchNpm(query: string): Promise<string | null> {
+  try {
+    const cleanQuery = query.split('/').pop() || query;
+    const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(cleanQuery)}&size=3`;
+    const { data } = await axios.get(url, { timeout: 2000 });
+    
+    if (data.objects && data.objects.length > 0) {
+      // Look for a close match or the first result if it seems related to MCP
+      for (const obj of data.objects) {
+        const pkg = obj.package;
+        const name = pkg.name.toLowerCase();
+        const desc = (pkg.description || "").toLowerCase();
+        if (name.includes("mcp") || desc.includes("mcp") || name.includes(cleanQuery.toLowerCase())) {
+          return pkg.name;
+        }
+      }
+      return data.objects[0].package.name;
+    }
+  } catch (e) {}
+  return null;
+}
+
 async function getGitHubInstallHint(repoPath: string, snippet: string): Promise<string> {
   const snippetLower = (snippet || "").toLowerCase();
+  const repoName = repoPath.split('/').pop() || "";
   
   if (snippetLower.includes("docker pull") || snippetLower.includes("docker run")) {
     return `docker run -i --rm ${repoPath.toLowerCase()}`;
@@ -220,6 +243,7 @@ async function getGitHubInstallHint(repoPath: string, snippet: string): Promise<
 
   const branches = ['main', 'master'];
   
+  // 1. Try package.json in the repo
   for (const branch of branches) {
     try {
       const pkgUrl = `https://raw.githubusercontent.com/${repoPath}/${branch}/package.json`;
@@ -229,6 +253,11 @@ async function getGitHubInstallHint(repoPath: string, snippet: string): Promise<
     } catch (e) {}
   }
 
+  // 2. Try to find the package on NPM by repo name
+  const npmName = await searchNpm(repoName);
+  if (npmName) return `npx -y ${npmName}`;
+
+  // 3. Try README for instructions
   for (const branch of branches) {
     try {
       const readmeUrl = `https://raw.githubusercontent.com/${repoPath}/${branch}/README.md`;
@@ -277,8 +306,8 @@ async function discoverMcpTools(query: string) {
         const cleanLink = link.split('?')[0]; 
         const parts = cleanLink.split('github.com/');
         if (parts[1]) {
-            const repoPath = parts[1].split('/').slice(0, 2).join('/'); // author/repo
-            if (repoPath) {
+            const repoPath = parts[1].split('/').slice(0, 2).join('/').replace(/\/$/, ""); 
+            if (repoPath && repoPath.includes('/')) {
                 installCommand = await getGitHubInstallHint(repoPath, snippet);
             }
         }
@@ -288,8 +317,10 @@ async function discoverMcpTools(query: string) {
         source = "Smithery";
         const parts = link.split('smithery.ai/server/');
         if (parts[1]) {
-             const pkgName = parts[1].split('/')[0];
-             installCommand = `npx -y ${pkgName}`;
+             const slug = parts[1].split('/')[0].split('?')[0];
+             // Verify if slug is a valid NPM package or try to find it
+             const npmName = await searchNpm(slug);
+             installCommand = `npx -y ${npmName || slug}`;
         }
       }
 
