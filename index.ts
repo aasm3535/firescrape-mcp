@@ -13,7 +13,7 @@ import { discoverMcpTools } from "./src/tools/discover";
 import { runDeepResearch } from "./src/tools/deep_research";
 
 const SERVER_NAME = "@yutugyutugyutug/firescrape-mcp";
-const SERVER_VERSION = "1.1.0"; // Major version bump for modular refactor
+const SERVER_VERSION = "1.1.1"; // Major version bump for modular refactor
 
 const server = new Server(
   { name: SERVER_NAME, version: SERVER_VERSION },
