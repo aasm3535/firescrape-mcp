@@ -1,22 +1,53 @@
-﻿# 🔥 FireScrape MCP Server
+# 🔥 FireScrape MCP Server
 
-An **MCP (Model Context Protocol)** server that empowers AI models (like Claude, Cursor, etc.) to browse the web, search for information, and read local files.
+<div align="center">
+
+![npm version](https://img.shields.io/npm/v/@yutugyutugyutug/firescrape-mcp?color=orange&label=FireScrape)
+![license](https://img.shields.io/npm/l/@yutugyutugyutug/firescrape-mcp)
+![downloads](https://img.shields.io/npm/dm/@yutugyutugyutug/firescrape-mcp)
+
+**The Ultimate Gateway for AI Agents.**
+*Empower your LLMs to Browse, Search, Research, and Scrape with precision.*
+
+[Installation](#-installation--usage) • [Connection Guides](#-connection-guides) • [AI Rules](#-ai-agent-rules) • [Tools](#%EF%B8%8F-tools-reference)
+
+</div>
+
+---
+
+## 🚀 Overview
+
+**FireScrape MCP** is a Model Context Protocol server designed to bridge the gap between AI models (Claude, Cursor, etc.) and the real world. It provides robust tools for:
+*   **Deep Research:** Multi-step autonomous investigation and synthesis.
+*   **Web Access:** Anti-blocking search and intelligent markdown scraping.
+*   **Local Context:** File system access for project-aware coding.
 
 ## 📦 Installation & Usage
 
-You can run FireScrape directly without installation using `npx`:
+Run instantly without global installation using `npx`:
 
 ```bash
 npx -y @yutugyutugyutug/firescrape-mcp
 ```
 
-### Features (v1.1.0)
-*   **`deep_research`**: Multi-step automated research with text-density filtering and synthesis.
-*   **`search_web`**: Robust search with anti-blocking and fallback providers (DDG + Brave).
-*   **`scrape_webpage`**: Smart scraping that removes noise and converts to clean Markdown.
-*   **`discover_tools`**: Find other MCP servers on GitHub and Smithery with accurate install hints.
-*   **Local Files**: `list_files` and `read_file` tools for context.
+### ✨ Key Features (v1.1.0)
 
+*   🧠 **`deep_research`**: Conducts autonomous, multi-step research on complex topics, filtering noise and synthesizing reports.
+*   🌐 **`search_web`**: High-availability web search with fallback providers (DuckDuckGo + Brave) to ensure you always get results.
+*   📄 **`scrape_webpage`**: Converts messy HTML into clean, token-efficient Markdown, stripping ads and irrelevant boilerplate.
+*   🔍 **`discover_tools`**: a "Meta-Tool" to find and install other MCP servers from GitHub and Smithery.
+*   📂 **Local Integration**: Seamlessly `list_files` and `read_file` to give your AI context about your local project.
+
+---
+
+## 🤖 AI Agent Rules
+
+**Want your AI to be smarter?**
+We have created a standardized rule set to teach your AI agents (Cursor, Windsurf, Cline) how to effectively use these tools to verify facts and avoid hallucinations.
+
+👉 **[Read the AI Usage Guidelines](./rules/AI_USAGE_RULES.md)**
+
+*Copy the content of the file above into your `.cursorrules` or System Prompt to supercharge your agent.*
 
 ---
 
@@ -110,4 +141,6 @@ claude mcp add firescrape -- npx -y @yutugyutugyutug/firescrape-mcp
 | `read_file` | Reads a file's content. | `path` (string) |
 
 ---
-Built with ❤️ by [FireScrape](https://github.com/aasm3535/firescrape).
+<div align="center">
+Built with ❤️ by <a href="https://github.com/aasm3535/firescrape">FireScrape</a>
+</div>
