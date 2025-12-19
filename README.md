@@ -22,30 +22,79 @@ npx -y @yutugyutugyutug/firescrape-mcp
 
 ## 🔌 Connection Guides
 
-### Claude Desktop App
-
-1.  Open config: `Win + R` -> `%APPDATA%\Claude\claude_desktop_config.json`
+### 1. Claude Desktop App
+1.  Open your configuration file:
+    *   **Windows:** `Win + R` -> `%APPDATA%\Claude\claude_desktop_config.json`
+    *   **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
 2.  Add this configuration:
-
-```json
-{
-  "mcpServers": {
-    "firescrape": {
-      "command": "bunx",
-      "args": ["@yutugyutugyutug/firescrape-mcp"]
+    ```json
+    {
+      "mcpServers": {
+        "firescrape": {
+          "command": "npx",
+          "args": ["-y", "@yutugyutugyutug/firescrape-mcp"]
+        }
+      }
     }
-  }
-}
+    ```
+
+### 2. Cursor (AI Code Editor)
+1.  Navigate to **Settings** -> **Features** -> **MCP**.
+2.  Click **+ Add New MCP Server**.
+3.  Fill in the fields:
+    *   **Name:** `FireScrape`
+    *   **Type:** `stdio`
+    *   **Command:** `npx`
+    *   **Args:** `-y @yutugyutugyutug/firescrape-mcp`
+4.  Click **Add** to save.
+
+### 3. Gemini CLI
+1.  Locate your config file:
+    *   **Linux/Mac:** `~/.gemini/settings.json`
+    *   **Windows:** `%USERPROFILE%\.gemini\settings.json`
+2.  Insert the server configuration:
+    ```json
+    {
+      "mcpServers": {
+        "firescrape": {
+          "command": "npx",
+          "args": ["-y", "@yutugyutugyutug/firescrape-mcp"]
+        }
+      }
+    }
+    ```
+
+### 4. Claude Code (CLI)
+Run this command in your terminal to add FireScrape:
+```bash
+claude mcp add firescrape -- npx -y @yutugyutugyutug/firescrape-mcp
 ```
 
-### Cursor (AI Code Editor)
+### 5. Google Antigravity
+1.  Open the **Manage MCP Servers** panel.
+2.  Select **"Edit Configuration"** or open `mcp_config.json`.
+3.  Add the entry:
+    ```json
+    "firescrape": {
+      "command": "npx",
+      "args": ["-y", "@yutugyutugyutug/firescrape-mcp"]
+    }
+    ```
 
-1.  **Settings** -> **Features** -> **MCP**.
-2.  **Add New MCP Server**.
-3.  **Name:** `FireScrape`
-4.  **Type:** `stdio`
-5.  **Command:** `bunx` (or `npx`)
-6.  **Args:** `@yutugyutugyutug/firescrape-mcp`
+### 6. Cline (VS Code Extension)
+1.  Open **Cline Settings** (in VS Code settings or via the extension menu).
+2.  Locate the **MCP Servers** config file (usually via a button "Edit MCP Settings").
+3.  Add the following:
+    ```json
+    {
+      "mcpServers": {
+        "firescrape": {
+          "command": "npx",
+          "args": ["-y", "@yutugyutugyutug/firescrape-mcp"]
+        }
+      }
+    }
+    ```
 
 ---
 
