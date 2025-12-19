@@ -10,7 +10,7 @@ import TurndownService from "turndown";
 
 // --- Config ---
 const SERVER_NAME = "@yutugyutugyutug/firescrape-mcp";
-const SERVER_VERSION = "1.0.11";
+const SERVER_VERSION = "1.0.12";
 
 const turndownService = new TurndownService({
   headingStyle: "atx",
@@ -341,6 +341,51 @@ async function discoverMcpTools(query: string) {
   }
 }
 
+async function deepResearchInternal(topic: string, depth: number, visited: Set<string> = new Set()): Promise<string> {
+  if (depth <= 0) return "";
+
+  const results = await unifiedSearch(topic);
+  const topLinks = results
+    .map(r => cleanDdgUrl(r.link))
+    .filter(link => link && !visited.has(link))
+    .slice(0, 3);
+
+  topLinks.forEach(link => visited.add(link));
+
+  const scrapes = await Promise.allSettled(topLinks.map(link => scrapeUrl(link)));
+  
+  let report = `## Topic: ${topic}\n\n`;
+  let subTopics: string[] = [];
+
+  for (const res of scrapes) {
+    if (res.status === 'fulfilled') {
+      const { url, metadata, markdown, toc } = res.value;
+      report += `### Source: [${metadata.title || url}](${url})\n`;
+      
+      // Basic insight extraction: take the first 500 chars and some headers
+      const insight = markdown.split('\n').filter(l => l.length > 40).slice(0, 3).join('\n\n');
+      report += `**Insights:**\n${insight}...\n\n`;
+      
+      // Collect potential sub-topics from headers (H2/H3)
+      const potentialSubs = toc.filter(t => t.level === 'h2' || t.level === 'h3').map(t => t.text);
+      subTopics.push(...potentialSubs);
+    }
+  }
+
+  if (depth > 1 && subTopics.length > 0) {
+    // Select 2 unique subtopics for next iteration
+    const nextTopics = Array.from(new Set(subTopics))
+      .filter(t => t.length > 10 && t.length < 100)
+      .slice(0, 2);
+    
+    for (const next of nextTopics) {
+      report += `\n---\n\n` + await deepResearchInternal(next, depth - 1, visited);
+    }
+  }
+
+  return report;
+}
+
 // --- Server Setup ---
 const server = new Server(
   { name: SERVER_NAME, version: SERVER_VERSION },
@@ -390,6 +435,18 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         }
       },
       {
+        name: "deep_research",
+        description: "Deep multi-step research on a topic. Searches, scrapes, and recurses to find insights.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            topic: { type: "string", description: "The main research topic" },
+            depth: { type: "number", description: "Recursion depth (default: 2)", default: 2 }
+          },
+          required: ["topic"]
+        }
+      },
+      {
         name: "read_file",
         description: "Read local file content.",
         inputSchema: {
@@ -428,12 +485,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { url, query } = args as { url: string, query: string };
       return { content: [{ type: "text", text: JSON.stringify(await searchInPage(url, query), null, 2) }] };
     }
-    if (name === "discover_tools") {
-      const { query } = args as { query: string };
-      return { content: [{ type: "text", text: JSON.stringify(await discoverMcpTools(query), null, 2) }] };
-    }
-    if (name === "read_file") {
-      const filePath = (args as { path: string }).path;
+        if (name === "discover_tools") {
+          const { query } = args as { query: string };
+          return { content: [{ type: "text", text: JSON.stringify(await discoverMcpTools(query), null, 2) }] };       
+        }
+        if (name === "deep_research") {
+          const { topic, depth = 2 } = args as { topic: string, depth?: number };
+          const report = await deepResearchInternal(topic, depth);
+          return { content: [{ type: "text", text: report }] };
+        }
+        if (name === "read_file") {      const filePath = (args as { path: string }).path;
       const content = await fs.readFile(filePath, 'utf-8');
       return { content: [{ type: "text", text: content }] };
     }
